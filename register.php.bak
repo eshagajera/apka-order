@@ -1,0 +1,45 @@
+<?php
+include 'db.php';
+session_start();
+if (isset($_POST['register'])) 
+{
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+    $phone = $_POST['phone'];
+    $address = $_POST['address'];
+    $query = "INSERT INTO users (username, email, password, phone, address) 
+              VALUES ('$username', '$email', '$password', '$phone', '$address')";
+    if ($conn->query($query)) 
+	{
+        header('Location: user_login.php');
+        exit();
+    } else {
+        echo "Error: " . $conn->error;
+    }
+}
+?>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-box">
+        <h2>Register</h2>
+        <form method="post">
+            <input type="text" name="username" placeholder="Enter Username" required>
+            <input type="email" name="email" placeholder="Enter Email" required>
+            <input type="password" name="password" placeholder="Enter Password" required>
+            <input type="text" name="phone" placeholder="Enter Phone Number">
+            <textarea name="address" placeholder="Enter Address" rows="3"></textarea><br>
+            <button type="submit" name="register">Register</button><br>
+        </form>
+        <a href="user_login.php">Already have an account? Login</a>
+    </div>
+</div>
+<?php include 'footer.php'; ?>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<?php
+session_start();
+if (!isset($_SESSION['order_success'])) {
+    header("Location: dashboard.php");
+    exit();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Success - Apka Order</title>
+    <link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+	body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f6f9;
+        }
+        .success-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: pop 0.5s ease;
+        }
+        .success-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #28a745, #007bff);
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+        .success-container h1 {
+            font-size: 30px;
+            color: #28a745;
+            margin-top: 20px;
+        }
+        .success-container p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .ticket {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e6ffed;
+            border: 2px dashed #28a745;
+            border-radius: 12px;
+            text-align: left;
+        }
+        .ticket strong {
+            color: #333;
+        }
+        .btn-menu {
+            margin-top: 25px;
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-menu:hover {
+            background-color: #0056b3;
+        }
+        .success-icon {
+            font-size: 60px;
+            color: #28a745;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+	</style>
+</head>
+<body>
+
+<?php include 'sidebar.php'; ?>
+
+<div class="main success-container">
+    <div class="success-icon">
+        🎉
+    </div>
+
+    <h1>Order Confirmed!</h1>
+    <p>Thank you, <strong><?php echo isset($_SESSION['order_user']) ? htmlspecialchars($_SESSION['order_user']) : 'Customer'; ?></strong>!</p>
+
+    <div class="ticket">
+        <p><strong>🛒 Order Status:</strong> Confirmed</p>
+        <p><strong>💳 Payment Method:</strong> <?php echo isset($_SESSION['payment_method']) ? htmlspecialchars($_SESSION['payment_method']) : 'Unknown'; ?></p>
+        <p><strong>📄 Payment Details:</strong> <?php echo isset($_SESSION['payment_detail']) ? htmlspecialchars($_SESSION['payment_detail']) : 'Not Available'; ?></p>
+        <p><strong>⏰ Order Time:</strong> <?php echo isset($_SESSION['order_time']) ? htmlspecialchars($_SESSION['order_time']) : 'Time not available'; ?></p>
+
+    </div>
+
+    <p>🥳 We are preparing your delicious food! 🍽️</p>
+    <a href="menu.php" class="btn-menu">🍔 Browse More Dishes</a>
+</div>
+
+<?php include 'footer.php'; ?>
+
+</body>
+</html>
+
+<?php
+// Cleanup session after showing success
+unset($_SESSION['order_success']);
+unset($_SESSION['payment_method']);
+unset($_SESSION['payment_detail']);
+unset($_SESSION['order_user']);
+unset($_SESSION['order_time']);
+
+?>

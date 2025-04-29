@@ -1,0 +1,91 @@
+<?php
+session_start();
+$conn = new mysqli('localhost', 'root', '', 'apka_order');
+if (!isset($_SESSION['user_id'])) 
+{
+    header("Location: user_login.php");
+    exit();
+}
+if (isset($_GET['add_to_cart'])) 
+{
+    $product_id = intval($_GET['add_to_cart']);
+    if (!isset($_SESSION['cart'])) 
+	{
+        $_SESSION['cart'] = [];
+    }
+    if (!isset($_SESSION['cart'][$product_id])) 
+	{
+        $_SESSION['cart'][$product_id] = 1;
+    } 
+	else 
+	{
+        $_SESSION['cart'][$product_id]++;
+    }
+    header("Location: menu.php");
+    exit();
+}
+$categories = $conn->query("SELECT DISTINCT category FROM products");
+?>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Menu - Apka Order</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<?php include 'sidebar.php'; ?>
+<div class="content">
+    <h1>Menu</h1><br>
+<div class="categories">
+        <a href="menu.php">All</a>
+        <?php while($cat = $categories->fetch_assoc()): ?>
+            <a href="menu.php?category=<?php echo urlencode($cat['category']); ?>">
+                <?php echo htmlspecialchars($cat['category']); ?>
+            </a>
+        <?php endwhile; ?>
+    </div>
+
+    <div class="products">
+        <?php
+        $category_filter = isset($_GET['category']) ? $_GET['category'] : '';
+        $sql = "SELECT * FROM products";
+        if ($category_filter) 
+		{
+            $sql .= " WHERE category='" . $conn->real_escape_string($category_filter) . "'";
+        }
+        $products = $conn->query($sql);
+        while($row = $products->fetch_assoc()):
+        ?>
+            <div class="product-card">
+                <img src="uploads/<?php echo htmlspecialchars($row['image']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
+                <h3><?php echo htmlspecialchars($row['name']); ?></h3>
+                <p><b>Category:</b> <?php echo htmlspecialchars($row['category']); ?></p>
+                <p><b>Price:</b> ₹<?php echo number_format($row['price'], 2); ?></p> <!-- ✅ PRICE DISPLAY HERE -->
+                <a href="?add_to_cart=<?php echo $row['id']; ?>" class="btn">Add to Cart</a>
+            </div>
+        <?php endwhile; ?>
+    </div>
+</div>
+<div class="cart-sidebar">
+    <h2>🛒 My Cart</h2>
+    <?php
+    if (isset($_SESSION['cart']) && count($_SESSION['cart']) > 0):
+        $total_items = 0;
+        foreach ($_SESSION['cart'] as $id => $qty):
+            $product = $conn->query("SELECT * FROM products WHERE id=$id")->fetch_assoc();
+            $total_items += $qty;
+    ?>
+        <div class="cart-item">
+            <p><?php echo htmlspecialchars($product['name']); ?> x <?php echo $qty; ?></p>
+        </div>
+    <?php endforeach; ?>
+        <a href="checkout.php" class="btn-checkout">Checkout (<?php echo $total_items; ?>)</a>
+    <?php else: ?>
+        <p>🛒 Cart is empty</p>
+    <?php endif; ?>
+</div>
+<?php include 'footer.php'; ?>
+</body>
+</html>

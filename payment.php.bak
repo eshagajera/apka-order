@@ -1,0 +1,104 @@
+<?php
+session_start();
+$conn = new mysqli('localhost', 'root', '', 'apka_order');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pay_now'])) {
+
+    $payment_method = $_POST['payment_method'] ?? '';
+    $payment_detail = '';
+
+    if ($payment_method === 'UPI') {
+        $payment_detail = $_POST['upi_id'] ?? '';
+    } elseif ($payment_method === 'Credit Card') {
+        $payment_detail = ($_POST['card_name'] ?? '') . ' - ' . ($_POST['card_number'] ?? '');
+    } else {
+        $payment_detail = 'Cash on Delivery';
+    }
+
+    if (isset($_SESSION['cart']) && !empty($_SESSION['cart']) && isset($_SESSION['user']) && isset($_SESSION['user_id'])) {
+        foreach ($_SESSION['cart'] as $product_id => $qty) {
+            $product = $conn->query("SELECT * FROM products WHERE id=$product_id")->fetch_assoc();
+            if ($product) {
+                $conn->query("INSERT INTO orders (customer_name, product_name, quantity, user_id) 
+                VALUES (
+                    '{$conn->real_escape_string($_SESSION['user'])}',
+                    '{$conn->real_escape_string($product['name'])}',
+                    $qty,
+                    {$_SESSION['user_id']}
+                )");
+            }
+        }
+        unset($_SESSION['cart']); // Clear cart after order
+    }
+
+    // Always set success info
+    $_SESSION['order_success'] = true;
+	$_SESSION['payment_method'] = $payment_method;
+	$_SESSION['payment_detail'] = $payment_detail;
+	$_SESSION['order_user'] = $_SESSION['user']; // 🚨 IMPORTANT line
+	$_SESSION['order_time'] = date('d M Y, h:i A');
+	unset($_SESSION['cart']);
+	header("Location: success.php");
+	exit();
+
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment - Apka Order</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+	.payment-section {
+            margin: 20px 0;
+        }
+        .payment-section label {
+            font-weight: bold;
+            font-size: 18px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .payment-section input[type="text"], .payment-section input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+	</style>
+</head>
+<body>
+
+<?php include 'sidebar.php'; ?>
+
+<div class="main">
+    <h1>Payment Processing 💳</h1>
+
+    <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
+        <form method="POST" class="checkout-form">
+            <div class="payment-section">
+                <label><input type="radio" name="payment_method" value="UPI" required> Pay using UPI (Google Pay, PhonePe)</label>
+                <input type="text" name="upi_id" placeholder="Enter your UPI ID (only if selected)">
+
+                <label><input type="radio" name="payment_method" value="Credit Card" required> Pay using Credit Card</label>
+                <input type="text" name="card_name" placeholder="Name on Card">
+                <input type="text" name="card_number" placeholder="Card Number">
+
+                <label><input type="radio" name="payment_method" value="Cash on Delivery" required> Cash on Delivery</label>
+            </div>
+
+            <button type="submit" name="pay_now" class="btn-checkout">Confirm Payment</button>
+        </form>
+    <?php else: ?>
+        <div class="empty-cart-message">
+            Your cart is empty. Please choose products first.
+        </div>
+        <a href="menu.php" class="go-to-menu">Go to Menu</a>
+    <?php endif; ?>
+</div>
+
+<?php include 'footer.php'; ?>
+
+</body>
+</html>

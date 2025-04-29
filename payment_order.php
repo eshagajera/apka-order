@@ -1,0 +1,139 @@
+<?php
+session_start();
+if (!isset($_SESSION['order']) || empty($_SESSION['order'])) 
+{
+    header('Location: order.php');
+    exit();
+}
+$selected_payment = $_POST['payment_method'] ?? '';
+?>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirm Your Order</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+	body {
+            background: #f0f2f5;
+            font-family: 'Poppins', sans-serif;
+        }
+        .order-summary {
+            background: #fff;
+            padding: 30px;
+            margin: 40px auto;
+            max-width: 700px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            animation: slideFade 1s ease-in-out;
+        }
+        .order-summary h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .payment-section {
+            margin-top: 30px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .payment-section select, .payment-section input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        .payment-section .hidden {
+            display: none;
+        }
+        .btn-confirm {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 15px;
+            color: #fff;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-confirm:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            transform: translateY(-3px);
+            box-shadow: 0px 8px 15px rgba(0,0,0,0.1);
+        }
+        @keyframes slideFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+	</style>
+</head>
+<body>
+<div class="container">
+    <?php include 'sidebar.php'; ?>
+    <div class="main">
+        <div class="order-summary">
+            <h2>🛒 Confirm Your Order</h2>
+			<?php
+            $total = 0;
+            foreach ($_SESSION['order'] as $item) {
+                $line_total = $item['price'] * $item['quantity'];
+                $total += $line_total;
+                ?>
+                <div class="order-item">
+                    <div><?= htmlspecialchars($item['product_name']) ?> x <?= $item['quantity'] ?></div>
+                    <div>₹<?= number_format($line_total, 2) ?></div>
+                </div>
+            <?php } ?>
+
+            <div class="order-item" style="font-weight: bold;">
+                <div>Total</div>
+                <div>₹<?= number_format($total, 2) ?></div>
+            </div>
+            <form action="" method="POST" class="payment-section">
+                <h3>💳 Payment Method</h3>
+                <select name="payment_method" required onchange="this.form.submit()">
+                    <option value="">Select Payment Method</option>
+                    <option value="Cash" <?= ($selected_payment == 'Cash') ? 'selected' : '' ?>>Cash</option>
+                    <option value="UPI" <?= ($selected_payment == 'UPI') ? 'selected' : '' ?>>UPI</option>
+                    <option value="Credit Card" <?= ($selected_payment == 'Credit Card') ? 'selected' : '' ?>>Credit Card</option>
+                </select>
+            </form>
+            <?php if ($selected_payment): ?>
+                <form action="final_order.php" method="POST" class="payment-section">
+                    <input type="hidden" name="payment_method" value="<?= htmlspecialchars($selected_payment) ?>">
+
+                    <?php if ($selected_payment == 'UPI'): ?>
+                        <input type="text" name="upi_id" placeholder="Enter UPI ID (e.g., user@bank)" required>
+                    <?php elseif ($selected_payment == 'Credit Card'): ?>
+                        <input type="text" name="card_name" placeholder="Name on Card" required>
+                        <input type="text" name="card_number" placeholder="Card Number" required>
+                    <?php elseif ($selected_payment == 'Cash'): ?>
+                        <p style="color: green;">No additional info needed for Cash payment.</p>
+                    <?php endif; ?>
+
+                    <button type="submit" class="btn-confirm">
+                        <i class="fas fa-check-circle"></i> Confirm Order
+                    </button>
+                </form>
+            <?php endif; ?>
+         </div>
+    </div>
+</div>
+<?php include 'footer.php'; ?>
+</body>
+</html>

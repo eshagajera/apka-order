@@ -1,0 +1,122 @@
+<?php
+session_start();
+$conn = new mysqli('localhost', 'root', '', 'apka_order');
+if ($_SERVER['REQUEST_METHOD'] == 'POST') 
+{
+    $customer_name = $conn->real_escape_string($_POST['customer_name']);
+    $selected_products = $_POST['products']; // array of product ids
+    $quantities = $_POST['quantity']; // array of quantities for each product id
+    $_SESSION['order'] = [];
+    $_SESSION['customer_name'] = $customer_name;
+    foreach ($selected_products as $product_id) 
+	{
+        $product_id = (int)$product_id;
+        $quantity = (int)$quantities[$product_id];
+        $product = $conn->query("SELECT name, price FROM products WHERE id = $product_id")->fetch_assoc();
+		$_SESSION['order'][] = [
+            'product_id' => $product_id,
+            'product_name' => $product['name'],
+            'price' => $product['price'],
+            'quantity' => $quantity
+        ];
+    }
+    header("Location: payment_order.php");
+    exit();
+}
+// Fetch 20 products from database
+$products = $conn->query("SELECT id, name, price FROM products LIMIT 20");
+?>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Order Food</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+	.order-form {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 30px auto;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .order-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .order-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .order-form button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+        .order-form button:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .product-item label {
+            flex: 1;
+            font-size: 16px;
+        }
+        .product-item input[type="number"] {
+            width: 70px;
+            margin-left: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+	</style>
+</head>
+<body>
+<div class="container">
+    <?php include 'sidebar.php'; ?>
+    <div class="main">
+        <div class="order-form">
+            <h2>🍽️ Order Food</h2>
+             <form method="POST">
+                <input type="text" name="customer_name" placeholder="Your Name" required>
+                <h3>Select Products</h3>
+                <?php while ($row = $products->fetch_assoc()): ?>
+                    <div class="product-item">
+                        <label>
+                            <input type="checkbox" name="products[]" value="<?= $row['id'] ?>"> 
+                            <?= htmlspecialchars($row['name']) ?> - ₹<?= number_format($row['price'], 2) ?>
+                        </label>
+                        <input type="number" name="quantity[<?= $row['id'] ?>]" value="1" min="1">
+                    </div>
+                <?php endwhile; ?>
+                <button type="submit"><i class="fas fa-paper-plane"></i> Proceed to Payment</button>
+            </form>
+        </div>
+    </div>
+</div>
+<?php include 'footer.php'; ?>
+</body>
+</html>
