@@ -25,7 +25,7 @@ It is a great project for learning or demonstrating full-stack development using
 2. Start Apache and MySQL services.
 3. Download or clone this repository into the htdocs folder (for XAMPP) or www folder (for WAMP):
      - Command to Clone the Repoitory : git clone https://github.com/your-username/apka-order.git
-5. Open phpMyAdmin and create a new database, e.g., apka_order.
+5. Open phpMyAdmin and create a new database (e.g., apka_order).
 6. Import the provided SQL file (apka_order.sql) to set up tables.
 7. Open your browser and go to : http://localhost/apka-order/
 8. Register a new account and explore all features!
