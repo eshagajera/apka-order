@@ -2,20 +2,29 @@
 session_start();
 $conn = new mysqli('localhost', 'root', '', 'apka_order');
 $user_id = $_SESSION['user_id'] ?? 0;
-if ($user_id) 
-{
-    $user = $conn->query("SELECT * FROM users WHERE id = $user_id")->fetch_assoc();
+
+$user = null;
+if ($user_id) {
+    $result = $conn->query("SELECT * FROM users WHERE id = $user_id");
+    if ($result && $result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+    }
 }
+
 $update_message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && $user_id) 
-{
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && $user_id) {
     $username = $conn->real_escape_string($_POST['username']);
     $email = $conn->real_escape_string($_POST['email']);
     $phone = $conn->real_escape_string($_POST['phone']);
     $address = $conn->real_escape_string($_POST['address']);
-	$conn->query("UPDATE users SET username='$username', email='$email', phone='$phone', address='$address' WHERE id=$user_id");
+    $conn->query("UPDATE users SET username='$username', email='$email', phone='$phone', address='$address' WHERE id=$user_id");
     $update_message = "✅ Profile updated successfully!";
-    $user = $conn->query("SELECT * FROM users WHERE id = $user_id")->fetch_assoc();
+    
+    // Refresh user data
+    $result = $conn->query("SELECT * FROM users WHERE id = $user_id");
+    if ($result && $result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+    }
 }
 ?>
 <html>
@@ -96,41 +105,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile']) && 
 <?php include 'sidebar.php'; ?>
 <div class="content">
     <div class="profile-container">
-        <div class="profile-card">
-            <div class="profile-avatar">
-                <i class="fa fa-user"></i>
+        <?php if ($user): ?>
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <i class="fa fa-user"></i>
+                </div>
+                <div>
+                    <h2>Hello, <?php echo htmlspecialchars($user['username']); ?> 👋</h2>
+                    <p>Welcome to your profile page</p>
+                </div>
             </div>
-            <div>
-                <h2>Hello, <?php echo htmlspecialchars($user['username']); ?> 👋</h2>
-                <p>Welcome to your profile page</p>
+
+            <?php if (!empty($update_message)): ?>
+                <div class="success-message"><?php echo $update_message; ?></div>
+            <?php endif; ?>
+
+            <div class="profile-info">
+                <div class="profile-field"><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></div>
+                <div class="profile-field"><strong>Phone:</strong> <?php echo htmlspecialchars($user['phone']); ?></div>
+                <div class="profile-field"><strong>Address:</strong> <?php echo htmlspecialchars($user['address']); ?></div>
             </div>
-        </div>
-        <?php if (!empty($update_message)): ?>
-            <div class="success-message"><?php echo $update_message; ?></div>
+
+            <button class="edit-btn" onclick="document.querySelector('.edit-form').style.display='block'; this.style.display='none';">Edit Profile ✏️</button>
+
+            <div class="edit-form">
+                <form method="POST">
+                    <label>Username:</label>
+                    <input type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required>
+
+                    <label>Email:</label>
+                    <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+
+                    <label>Phone:</label>
+                    <input type="text" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>" required>
+
+                    <label>Address:</label>
+                    <textarea name="address" rows="3" required><?php echo htmlspecialchars($user['address']); ?></textarea>
+
+                    <button type="submit" name="update_profile" class="edit-btn">Update Profile</button>
+                </form>
+            </div>
+        <?php else: ?>
+            <p style="color:red; font-weight:bold;">⚠️ User not found or not logged in. Please <a href="user_login.php">log in</a>.</p>
         <?php endif; ?>
-        <div class="profile-info">
-            <div class="profile-field"><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></div>
-            <div class="profile-field"><strong>Phone:</strong> <?php echo htmlspecialchars($user['phone']); ?></div>
-            <div class="profile-field"><strong>Address:</strong> <?php echo htmlspecialchars($user['address']); ?></div>
-        </div>
-        <button class="edit-btn" onclick="document.querySelector('.edit-form').style.display='block'; this.style.display='none';">Edit Profile ✏️</button>
-        <div class="edit-form">
-            <form method="POST">
-                <label>Username:</label>
-                <input type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required>
-
-                <label>Email:</label>
-                <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-
-                <label>Phone:</label>
-                <input type="text" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>" required>
-
-                <label>Address:</label>
-                <textarea name="address" rows="3" required><?php echo htmlspecialchars($user['address']); ?></textarea>
-
-                <button type="submit" name="update_profile" class="edit-btn">Update Profile</button>
-            </form>
-        </div>
     </div>
 </div>
 <?php include 'footer.php'; ?>
